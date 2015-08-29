@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Sudoku and Wordoku Solver</title>
+	<style>
+	body {
+		background: #272822;
+		color: #cf0;
+		font-family: Helvetica;
+	}
+	input {
+		font-family: Helvetica;
+		background: #333;
+		box-shadow: inset 0px 0px 5px black;
+		border: none;
+		border-radius: 5px;
+		text-align: center;
+		width: 15px;
+		height: 15px;
+		padding: 10px;
+		margin: 5px;
+		color: #cf0;
+		text-shadow: 0px 0px 3px black;
+	}
+	button {
+		background: #cf0;
+		color: #272822;
+		text-shadow: 0px 0px 3px #272822;
+		padding: 10px 40px 10px 40px;
+		margin: 20px;
+		font-size: 16px;
+		border-radius: 10px;
+		border: none;
+		font-weight: bold;
+		box-shadow: 0px 0px 5px black;
+		font-family: Tempus Sans ITC;
+	}
+	button:hover {
+		box-shadow: inset 0px 0px 5px black;
+	}
+	h1 {
+		text-shadow: 0px 0px 10px black;
+		font-family: Tempus Sans ITC;
+		margin-bottom: 35px;
+	}
+	#words {
+		display: none;
+	}
+	select
+	{
+		border:none;
+		border-radius: 5px;
+		padding: 5px;
+		margin: 10px;
+		background: #333;
+		color: #cf0;
+	}
+	</style>
+	<script>
+	var wordoku = false;
+	var chars = new Array();
+	function solType()
+	{
+		if(document.getElementById('st').value == "sudoku") {
+			document.getElementById('words').style.display = "none";
+			wordoku = false;
+		}
+		else if(document.getElementById('st').value == "wordoku") 
+			{
+				document.getElementById('words').style.display = "block";
+				wordoku = true;
+			}
+	}
+
+	function showSud(sud)
+	{
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				document.getElementById(i+''+j).value = sud[i][j];
+			}
+		}
+	}
+
+	function showWord(sud)
+	{
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				document.getElementById(i+''+j).value = chars[sud[i][j]-1];
+			}
+		}
+		var word = "";
+		for(var x=0; x<9; x++) 
+		{
+			word += chars[sud[x][x]-1];
+			document.getElementById(x+""+x).style.color = "cyan";
+			document.getElementById(x+""+x).style.textShadow = "0px 0px 5px cyan";
+		}
+		alert("The word is "+ word + " !!");
+	}
+
+	function b(sud, vals)
+	{
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				for(var x=0; x<9; x++)
+				{
+					if(sud[i][j] == 0)
+					{
+						vals[i][j][sud[i][x]-1] = 0;
+						vals[i][j][sud[x][j]-1] = 0;
+					}
+				}
+				var m = (i < 3)?3:(i < 6)?6:9;
+				var n = (j < 3)?3:(j < 6)?6:9;
+				for(var x=m-3; x<m; x++)
+				{
+					for(var y=n-3; y<n; y++)
+					{
+						vals[i][j][sud[x][y]-1] = 0;
+					}
+				}
+			}
+		}
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				if(sud[i][j] != 0)
+				{
+					var val = sud[i][j];
+					for(var k=0; k<9; k++)
+					{
+						if(sud[i][k] == 0)
+						{
+							vals[i][k][val-1] = 0;
+						}
+						if(sud[k][j] == 0)
+						{
+							vals[k][j][val-1] = 0;
+						}
+					}
+				}
+			}
+		}
+		return vals;
+	}
+
+	function solvem(i, j, sud)
+	{
+		if(sud[i][j] == 0)
+		{
+			var values = [1,2,3,4,5,6,7,8,9];
+			for(var x=0; x<9; x++)
+			{
+				values[sud[i][x]-1] = 0;
+				values[sud[x][j]-1] = 0;
+			}
+			var m = (i < 3)?3:(i < 6)?6:9;
+			var n = (j < 3)?3:(j < 6)?6:9;
+			for(var x=m-3; x<m; x++)
+			{
+				for(var y=n-3; y<n; y++)
+				{
+					values[sud[x][y]-1] = 0;
+				}
+			}
+			var freq=0;
+			var val;
+			for(var x=0; x<9; x++)
+			{
+				if(values[x] != 0)
+				{
+					freq++;
+					val = values[x];
+				}
+				if(freq > 1) break;
+			}
+			if(freq == 1) {
+				sud[i][j] = val;
+				document.getElementById(i+""+j).value = val;
+				document.getElementById(i+""+j).style.color = "white";
+			}
+		}
+		return sud;
+	}
+
+	function notSolved(sud)
+	{
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				if(sud[i][j] == 0) return true;
+			}
+		}
+		return false;
+	}
+
+	function empty(sud)
+	{
+		for(var i=0; i<9; i++)
+		{
+			for(var j=0; j<9; j++)
+			{
+				if(sud[i][j] != 0) return false;
+			}
+		}
+		return true;
+	}
+
+	function getsud()
+	{
+		var sud = new Array();
+		for(var i=0; i<9; i++)
+		{
+			sud[i] = new Array();
+			for(var j=0; j<9; j++)
+			{
+				if(document.getElementById(i+""+j).value != "")	sud[i][j] = document.getElementById(i+""+j).value;
+				else sud[i][j] = 0;
+			}
+		}
+		return sud;
+	}
+
+	function getword()
+	{
+		for(var i=0; i<9; i++)
+		{
+			chars[i] = document.getElementById("n"+(i+1)).value;
+		}
+		var sud = new Array();
+		for(var i=0; i<9; i++)
+		{
+			sud[i] = new Array();
+			for(var j=0; j<9; j++)
+			{
+				if(document.getElementById(i+""+j).value != "")	
+				{				
+					for(var x=0; x<9; x++)
+					{
+						if(chars[x] == document.getElementById(i+""+j).value)
+							sud[i][j] = x+1;
+					}
+				}
+				else sud[i][j] = 0;
+			}
+		}
+		return sud;
+	}
+
+	function init()
+	{
+		var sud;
+		if(wordoku == false) 
+		{
+			sud = getsud();
+		}
+		else sud = getword();
+		if(empty(sud)) 
+		{
+			alert("Enter the numbers!");
+			return 0;
+		}
+		var i=0;
+		var vals = new Array();
+		for(i=0; i<9; i++)
+		{
+			vals[i] = new Array();
+			for(j=0; j<9; j++)
+			{
+				vals[i][j] = new Array();
+				if(sud[i][j] == 0)
+				{
+					for(k=0; k<9; k++)
+					{
+						vals[i][j][k] = k+1;
+					}
+				}
+			}
+		}
+		while(notSolved(sud))
+		{
+			for(var i=0; i<9; i++)
+			{
+				for(var j=0; j<9; j++)
+				{
+					sud = solvem(i, j, sud);
+
+				}
+			}
+			vals = b(sud, vals);
+			for(var m=3; m<=9; m+=3)
+			{
+				for(var n=3; n<=9; n+=3)
+				{
+					var v = [1,2,3,4,5,6,7,8,9];
+					for(var x=m-3; x<m; x++)
+					{
+						for(var y=n-3; y<n; y++)
+						{
+							var val = sud[x][y];
+							v[val-1] = 0;
+						}
+					}
+					var q=0, w=0;
+					for(var h=0;h<9; h++)
+					{
+						var val=v[h];
+						if(val != 0)
+						{
+							var num = 0;
+							for(var x = m-3; x<m; x++)
+							{
+								for(y=n-3; y<n; y++)
+								{
+									if(sud[x][y] == 0)
+									{
+										for(j=0; j<9; j++)
+										{
+											if(vals[x][y][j] == val)
+											{
+												q=x;
+												w=y;
+												num++;
+											}
+										}
+										if(num>1) break;
+									}
+								}
+							}
+							if(num == 1)
+							{
+								sud[q][w] = val;
+								document.getElementById(q+""+w).value = val;
+								document.getElementById(q+""+w).style.color = "white";
+							}
+						}
+					}
+				}
+			}
+		}
+		if(!wordoku) showSud(sud);
+		else showWord(sud);
+	}
+
+	</script>
+</head>
+<body>
+<center>
+	<div class="title"><h1>Sudoku &amp; Wordoku</h1></div>
+	<input type="text" id="00" maxlength="1">
+	<input type="text" id="01" maxlength="1">
+	<input type="text" id="02" maxlength="1">
+	<input type="text" id="03" maxlength="1">
+	<input type="text" id="04" maxlength="1">
+	<input type="text" id="05" maxlength="1">
+	<input type="text" id="06" maxlength="1">
+	<input type="text" id="07" maxlength="1">
+	<input type="text" id="08" maxlength="1">
+	</br>
+	<input type="text" id="10" maxlength="1">
+	<input type="text" id="11" maxlength="1">
+	<input type="text" id="12" maxlength="1">
+	<input type="text" id="13" maxlength="1">
+	<input type="text" id="14" maxlength="1">
+	<input type="text" id="15" maxlength="1">
+	<input type="text" id="16" maxlength="1">
+	<input type="text" id="17" maxlength="1">
+	<input type="text" id="18" maxlength="1">
+	</br>
+	<input type="text" id="20" maxlength="1">
+	<input type="text" id="21" maxlength="1">
+	<input type="text" id="22" maxlength="1">
+	<input type="text" id="23" maxlength="1">
+	<input type="text" id="24" maxlength="1">
+	<input type="text" id="25" maxlength="1">
+	<input type="text" id="26" maxlength="1">
+	<input type="text" id="27" maxlength="1">
+	<input type="text" id="28" maxlength="1">
+	</br>
+	<input type="text" id="30" maxlength="1">
+	<input type="text" id="31" maxlength="1">
+	<input type="text" id="32" maxlength="1">
+	<input type="text" id="33" maxlength="1">
+	<input type="text" id="34" maxlength="1">
+	<input type="text" id="35" maxlength="1">
+	<input type="text" id="36" maxlength="1">
+	<input type="text" id="37" maxlength="1">
+	<input type="text" id="38" maxlength="1">
+	</br>
+	<input type="text" id="40" maxlength="1">
+	<input type="text" id="41" maxlength="1">
+	<input type="text" id="42" maxlength="1">
+	<input type="text" id="43" maxlength="1">
+	<input type="text" id="44" maxlength="1">
+	<input type="text" id="45" maxlength="1">
+	<input type="text" id="46" maxlength="1">
+	<input type="text" id="47" maxlength="1">
+	<input type="text" id="48" maxlength="1">
+	</br>
+	<input type="text" id="50" maxlength="1">
+	<input type="text" id="51" maxlength="1">
+	<input type="text" id="52" maxlength="1">
+	<input type="text" id="53" maxlength="1">
+	<input type="text" id="54" maxlength="1">
+	<input type="text" id="55" maxlength="1">
+	<input type="text" id="56" maxlength="1">
+	<input type="text" id="57" maxlength="1">
+	<input type="text" id="58" maxlength="1">
+	</br>
+	<input type="text" id="60" maxlength="1">
+	<input type="text" id="61" maxlength="1">
+	<input type="text" id="62" maxlength="1">
+	<input type="text" id="63" maxlength="1">
+	<input type="text" id="64" maxlength="1">
+	<input type="text" id="65" maxlength="1">
+	<input type="text" id="66" maxlength="1">
+	<input type="text" id="67" maxlength="1">
+	<input type="text" id="68" maxlength="1">
+	</br>
+	<input type="text" id="70" maxlength="1">
+	<input type="text" id="71" maxlength="1">
+	<input type="text" id="72" maxlength="1">
+	<input type="text" id="73" maxlength="1">
+	<input type="text" id="74" maxlength="1">
+	<input type="text" id="75" maxlength="1">
+	<input type="text" id="76" maxlength="1">
+	<input type="text" id="77" maxlength="1">
+	<input type="text" id="78" maxlength="1">
+	</br>
+	<input type="text" id="80" maxlength="1">
+	<input type="text" id="81" maxlength="1">
+	<input type="text" id="82" maxlength="1">
+	<input type="text" id="83" maxlength="1">
+	<input type="text" id="84" maxlength="1">
+	<input type="text" id="85" maxlength="1">
+	<input type="text" id="86" maxlength="1">
+	<input type="text" id="87" maxlength="1">
+	<input type="text" id="88" maxlength="1">
+	</br>
+	<select onChange="solType();" id="st">
+		<option selected="selected" value="sudoku">Sudoku</option>
+		<option value="wordoku">Wordoku</option>
+	</select>
+	</br>
+	<div id="words">
+		<input type="text" id="n1" placeholder="1" maxlength="1">
+		<input type="text" id="n2" placeholder="2" maxlength="1">
+		<input type="text" id="n3" placeholder="3" maxlength="1">
+		<input type="text" id="n4" placeholder="4" maxlength="1">
+		<input type="text" id="n5" placeholder="5" maxlength="1">
+		<input type="text" id="n6" placeholder="6" maxlength="1">
+		<input type="text" id="n7" placeholder="7" maxlength="1">
+		<input type="text" id="n8" placeholder="8" maxlength="1">
+		<input type="text" id="n9" placeholder="9" maxlength="1">
+	</div>
+	</br>
+	<button onClick="init();">Solve</button>
+</center>
+</body>
+</html>
